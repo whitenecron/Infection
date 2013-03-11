@@ -24,7 +24,7 @@ public class Infection extends JFrame{
     /**
      * @param args the command line arguments
      */
-    final int radiusCity=30;
+    final int radiusCity=30;// отображаемый радиус города 
     static Button Next=new Button("Next turn");
     static Button Hill=new Button("Hill");
     static Button Reset=new Button("Reset");
@@ -34,10 +34,10 @@ public class Infection extends JFrame{
     static Button Vactine=new Button("Vactine");
     static Button Teleport=new Button("Teleport");
     static Image Background;
-    static Vector<Button> Cards = new Vector();
-    static game logic;
+    static Vector<Button> Cards = new Vector();// кнопки карт
+    static game logic; // класс игры
     static Infection form;
-    static int actCard;
+    static int actCard; // номер активной карты
     Infection(String s){
         super(s);
         getContentPane().setBackground(Color.WHITE);
@@ -99,6 +99,7 @@ public class Infection extends JFrame{
         g.setColor(Color.red);
         Vector<track> Trackers = logic.getTrackers();
         int num=Trackers.size();
+        // отображение линий путей
         for(int i=0;i<num;i++){
             int XBegin=Trackers.get(i).XBegin;
             int YBegin=Trackers.get(i).YBegin;
@@ -106,6 +107,7 @@ public class Infection extends JFrame{
             int YEnd=Trackers.get(i).YEnd;
             g.drawLine(XBegin*W/1000+radiusCity/2, YBegin*H/1000+radiusCity/2, XEnd*W/1000+radiusCity/2, YEnd*H/1000+radiusCity/2);
         }
+        // отображение городов
         Vector<City> Cities = logic.getCities();
         num=Cities.size();
         for(int i=0; i<num; i++)
@@ -134,6 +136,7 @@ public class Infection extends JFrame{
                 g.drawLine(X*W/1000+radiusCity/2, Y*H/1000+radiusCity/2,X*W/1000+radiusCity/2, Y*H/1000-radiusCity/2);
             }
         }
+        //отображение игроков 
         Vector<gamer> Gamers = logic.getGamers();
         for(int i=0; i<Gamers.size();i++){
             int city=Gamers.get(i).getPosition();
@@ -150,6 +153,8 @@ public class Infection extends JFrame{
                 g.fillOval(X*W/1000+X1, Y*H/1000+Y1,radiusCity/2,radiusCity/2);
             }
         }
+        
+        // отображение информирующей строки
         Font H1=new Font(null, num, 50);
         Font normal = new Font(null, num, 12);
         g.setFont(H1);
@@ -158,6 +163,8 @@ public class Infection extends JFrame{
         g.clearRect(W/4, 40, W/2+20,80);
         g.drawString(strTurn, W/4, 100);
         g.setFont(normal);
+        
+        //отбражение карт на руках
         Vector<Integer> Arm = logic.getArm();
         int n=Arm.size();
         for(int i=0;i<9;i++){
@@ -186,6 +193,8 @@ public class Infection extends JFrame{
                 Cards.get(i).setLabel("       ");
             }     
         }
+        
+        // отображение лекарств
         for(int i=0; i<4; i++){
             g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
         }
@@ -193,6 +202,7 @@ public class Infection extends JFrame{
    
     //private void setColor(Graphics g)
     
+    // обработка нажатия кнопок
     public boolean action(Event evt, Object arg) {
 
         if(arg=="Next turn"){
@@ -251,8 +261,8 @@ public class Infection extends JFrame{
     public static void main(String[] args) {
         // TODO code application logic here
         //String s=NumGamers.getText();
-        logic = new game(5,1);
-        form = new Infection("Infection");
+        logic = new game(5,1);// создание класса игры
+        form = new Infection("Infection"); // создание окна программы
         
     }
   /*  public static void main(String[] args) {
@@ -267,9 +277,11 @@ public class Infection extends JFrame{
                }
           });
      }*/
-
+     
+     // обработчик действий мыши
      public class CustomListener implements MouseListener {
-
+          
+          //событи происходящее при клике мыши
           public void mouseClicked(MouseEvent e) {
               int X=e.getX()-radiusCity/2;
               int Y=e.getY()-radiusCity/2;
