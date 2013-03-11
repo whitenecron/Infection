@@ -186,8 +186,12 @@ public class Infection extends JFrame{
                 Cards.get(i).setLabel("       ");
             }     
         }
+        for(int i=0; i<4; i++){
+            g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
+        }
     }
    
+    //private void setColor(Graphics g)
     
     public boolean action(Event evt, Object arg) {
 

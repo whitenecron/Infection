@@ -160,7 +160,7 @@ public class game {
             System.err.println ("Incorrect command"); 
         }*/
         for(int i=0;i<numgamers;i++){
-            gamer temp=new gamer("sandro", i+1, 0);
+            gamer temp=new gamer(i+1, 0);
             Gamers.add(temp);
             for(int j=0; j<6-numgamers; j++){
                 int tempcity=rnd.nextInt(Cities.size());
@@ -499,5 +499,9 @@ public class game {
     }
     int getActGamer(){
        return ActGamer; 
+    }
+    
+    boolean getVactine(int  Vactine){
+        return boolVactine[Vactine];
     }
 }

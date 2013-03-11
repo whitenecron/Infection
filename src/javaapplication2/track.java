@@ -1,8 +1,7 @@
 package javaapplication2;
 
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Модуль хранения путей
  */
 
 /**
@@ -10,7 +9,12 @@ package javaapplication2;
  * @author alchemist
  */
 public class track {
-    int XBegin, YBegin, XEnd, YEnd,Begin,End;
+    /*
+     * класс для хранения путей между городами(рёбер графа)
+     */
+    int Begin,End; //номера городов,которые связаны этим ребром
+    int XBegin, YBegin, XEnd, YEnd;  //координаты этих городв
+    
     track(int begin, int end, int xbegin, int ybegin, int xend, int yend) {
         Begin=begin;
         End=end;

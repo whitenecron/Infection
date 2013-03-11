@@ -1,6 +1,5 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Модуль хранения городов 
  */
 package javaapplication2;
 
@@ -9,11 +8,16 @@ package javaapplication2;
  * @author alchemist
  */
 public class City {
-    String Name;
-    int X,Y;
-    int Alert;; 
-    int Color;//0-чёрный 1-синий 2-жёлтый 3-оранжевый
-    boolean Laboratory;
+    /*
+     * класс для хранения городов
+     */
+    String Name; //название города
+    int X,Y; // координаты города на мировой карте
+    int Alert; // уровень заражения города
+    int Color; /*0-чёрный 1-синий 2-жёлтый 3-оранжевый
+     * каким вирусом заражён конкретный город
+     */
+    boolean Laboratory; // флаг, определяющий построена ли в городе лаборатория
     City(String name,int x, int y,int color){
         Name=name;
         X=x;
@@ -37,6 +41,10 @@ public class City {
     String getName(){
         return Name;
     }
+    /* повышение уровня заражения города, в случае эпидемии
+     * (заражением вирусом соседних городов) возвращает true
+     * если вирус не покидает границы города возвращает false
+     */
     boolean addInfect(){
         if (Alert<3){
             Alert++;
@@ -47,6 +55,9 @@ public class City {
             return true;
         }
     }
+    /* лечение города уменьшение уровня заражения на 1
+     * если город не заражён возвращает false
+     */
     boolean HillOne()
     {
         if(Alert>0){
@@ -58,7 +69,9 @@ public class City {
             return false;
         }
     }
-    
+    /* полное лечение города
+     * если город не заражён возвращает false
+     */
     boolean HillAll()
     {
         if(Alert>0){
@@ -70,6 +83,9 @@ public class City {
             return false;
         }
     }
+    /* постройка лаборатории
+     * возвращает true если все условия соблюдены для постройки лаборатории
+     */
     boolean BuildLab()
     {
         if (Laboratory==false){

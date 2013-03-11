@@ -1,6 +1,5 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Модуль хранения игроков
  */
 package javaapplication2;
 
@@ -11,22 +10,26 @@ import java.util.Vector;
  * @author alchemist
  */
 public class gamer {
-    String Name;
-    int Role; // 1-врач 2-учёный 3-руководитель 4-исследователь 5-диспетчер
-    int Position; 
-    Vector<Integer> Arm;
-    gamer(String name, int role, int position){
+    //String Name;
+    int Role; /*1-врач 2-учёный 3-руководитель 4-исследователь 5-диспетчер
+     * класс персонажа каждый имеет свои преимущества
+     */
+    int Position; // позиция персонажа
+    Vector<Integer> Arm; // карты на руке у игрока
+    gamer(int role, int position){
         Arm = new Vector(); 
-        Name=name;
+        //Name=name;
         Role=role;
         Position=position;
     }
+    // передвижение персонажа
     void Move(int position){
         Position=position;
     }
     int getPosition(){
         return Position;
     }
+    // получение первого символа названия класса персонажа
     char getRole(){
         char ret;
         switch(Role){
@@ -43,6 +46,7 @@ public class gamer {
         }
         return ret;
     }
+    // возвращает полное название класса персонажа
     String getRoleStr(){
         String ret;
         switch(Role){
@@ -59,12 +63,14 @@ public class gamer {
         }
         return ret;
     }
+    // возвращает номер класса персонажа
     int getRoleNum(){
         return Role;
     }
     Vector<Integer> getArm(){
         return Arm;
     }
+    // взять карту s в руку
     void addCard(int s){
         Arm.add(s);
     }
