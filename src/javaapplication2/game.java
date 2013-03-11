@@ -1,6 +1,5 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Основной модуль игры
  */
 package javaapplication2;
 
@@ -18,46 +17,36 @@ import java.util.regex.*;
  * @author alchemist
  */
 public class game {
-    int NumGamers,Level;
-    int ActGamer;
-    int Actions;
-    int Rate;
-    int NumLaboratory;
-    int numEpidemic;
-    boolean boolVactine[];
-    String Mode;
-    Vector<Integer> StrikeTurn;
-    Vector<gamer> Gamers=new Vector();
-    Vector<City> Cities=new Vector();
-    Vector<track> trackers=new Vector();
-    /*Connection conn;
-    Statement stmt;
-    ResultSet rs;*/
-    String userName = "root";
-    String password = "sandro23";
-    String url = "jdbc:mysql://localhost/pandemija";
+    // главный класс игры
+    int NumGamers; // количество игроков
+    int Level; // уровень сложности
+    int ActGamer; // текщий игрок
+    int Actions; // количесво оставшихся действий текущего игрока в этом ходу 
+    int Rate; 
+    int NumLaboratory; // количество лабораторий
+    int numEpidemic; // количество карт эпидемий в колоде
+    boolean boolVactine[]; // найдено ли лекарство от конкрктного заболевания
+    String Mode; // режим перемещения(перемещение, телепортация, чартерный рейс)
+    Vector<Integer> StrikeTurn; /* номера городов, в которых 
+     * произошли эпидемии на этом ходу
+     */
+    Vector<gamer> Gamers=new Vector(); /* список игроков*/
+    Vector<City> Cities=new Vector(); /* список городов*/
+    Vector<track> trackers=new Vector(); /* список путей*/
     game(int numgamers, int level){
         boolVactine=new boolean[4];
         for(int i=0;i<4;i++){
             boolVactine[i]=false;
         }
-        numEpidemic=level+3;
+        numEpidemic=level+3;/* установка количества эпидемий в колоде
+         * относительно уровня сложности
+         */     
         StrikeTurn=new Vector();
         Mode="";
         Rate=4;
         Random rnd= new Random();
-           
         
-        /*conn = null;
-        try
-        {
-            Class.forName ("com.mysql.jdbc.Driver").newInstance ();
-            conn = DriverManager.getConnection (url, userName, password);            
-        }
-        catch (Exception e)
-        {
-            int n=5;
-        }*/
+        // считывание из файла и формирование списка городов   
         try{
             BufferedReader Input = new BufferedReader(new FileReader(
                     "src/javaapplication2/City.txt"));
@@ -88,7 +77,9 @@ public class game {
                 Integer y=Integer.parseInt(MatQuesh.group());
                 Cities.add(new City(city,x,y,Color));
             }
-            while((FileStr=Input.readLine())!=null){
+            // формирование списка путей между городами
+            while(Input.ready()){
+                FileStr=Input.readLine(); 
                 Pattern PatQuesh=Pattern.compile("[0-9]+ ");
                 Matcher MatQuesh=PatQuesh.matcher(FileStr);
                 MatQuesh.find();
@@ -116,49 +107,18 @@ public class game {
             int n=5;  
         }
         NumLaboratory=1;
-        Cities.get(0).BuildLab();
-            for(int z=0;z<3;z++){
-                for(int i=1;i<4;i++){
-                    int City=rnd.nextInt(Cities.size());
-                    for(int j=0; j<i;j++)
-                    {
-                        Infection(City);
-                    }
-                }
+        Cities.get(0).BuildLab(); // постройка 1ой лаборатории в Москве
+        // начальное заражение городов
+        for(int z=0;z<3;z++){
+           for(int i=1;i<4;i++){
+              int City=rnd.nextInt(Cities.size());
+              for(int j=0; j<i;j++)
+              {
+                  Infection(City);
+              }
             }
-        /*try
-        {
-            
-            
-            stmt= conn.createStatement();
-            rs=stmt.executeQuery("Select * from city");
-            while(rs.next()){
-                String Name=rs.getString("Name");
-                int x=rs.getInt("x");
-                int y=rs.getInt("y");
-                int color=rs.getInt("Color");
-                City temp=new City(Name,x,y,color);
-                Cities.add(temp);
-            }
-            rs=stmt.executeQuery("Select * from track");
-            while(rs.next()){
-                int begin=rs.getInt("begin");
-                int end=rs.getInt("end");
-                City Begin=Cities.get(begin-1);
-                City End=Cities.get(end-1);
-                track temp2=new track(begin,end,Begin.getX(),Begin.getY(),End.getX(),End.getY());
-                trackers.add(temp2);
-            }
-            
-            
-            //stmt.executeQuery("");
-            //rs=stmt.executeQuery("select * from track_downloads");
-            //System.out.print("Correct");
         }
-        catch (Exception e)
-        {
-            System.err.println ("Incorrect command"); 
-        }*/
+        // набор карт в руки игроков
         for(int i=0;i<numgamers;i++){
             gamer temp=new gamer(i+1, 0);
             Gamers.add(temp);
@@ -189,125 +149,92 @@ public class game {
     {
         return Actions;
     }
+    /* метод обработки клика в координатах x y
+     * int radiusX, int radiusY радиус города на форме
+     */
     void onClick(int x, int y, int radiusX, int radiusY){
         int Num=trackers.size();
-        int begin = Gamers.get(ActGamer).Position;
-        if(Actions>0){
-            if(Mode==""){
-                for(int i=0; i<Num; i++){
+        int begin = Gamers.get(ActGamer).Position; // начальная позиция игрока
+        if(Actions>0){ // если у игрока остальсь действия
+            if(Mode==""){ // если выбран режим перемещения(по умолчанию)
+                for(int i=0; i<Num; i++){ // ищем города с которыми граничит текущий город
                     if(trackers.get(i).getBegin()==begin){
                         int end=trackers.get(i).getEnd();
                         track temp=trackers.get(i);
+                        // проверяем на этот ли город был клик
                         if((temp.getXEnd()>x-radiusX) && (temp.getXEnd()<x+radiusX) && 
                                 (temp.getYEnd()>y-radiusY) && (temp.getYEnd()<=y+radiusY)){
-                                Gamers.get(ActGamer).Move(end);
+                                Gamers.get(ActGamer).Move(end);//перемещение
                                 Actions--;
                                 break;
                         }
                     }
-                    else if(trackers.get(i).getEnd()==begin){
+                    else if(trackers.get(i).getEnd()==begin){/* аналогично для
+                     * случая когда начальная позиция совпадает с концом дороги
+                     */
                         int end=trackers.get(i).getBegin();
                         track temp=trackers.get(i);
                         if((temp.getXBegin()>x-radiusX) && (temp.getXBegin()<x+radiusX) && 
                             (temp.getYBegin()>y-radiusY) && (temp.getYBegin()<=y+radiusY)){
-                            Gamers.get(ActGamer).Move(end);
+                            Gamers.get(ActGamer).Move(end);// перемещение
                             Actions--;
                             break;
                         }   
                     }
                 }
             }
-            else if(Mode=="Chart"){
-                for(int i=0; i<Cities.size(); i++){
+            else if(Mode=="Chart"){// если режим чартерного рейса
+                for(int i=0; i<Cities.size(); i++){// ищем город на котором был клик
                     City temp=Cities.get(i);
                     if(temp.getX()>x-radiusX && temp.getX()<x+radiusX && 
                             temp.getY()>y-radiusY && temp.getY()<y+radiusY){
-                        Gamers.get(ActGamer).Move(i);
+                        Gamers.get(ActGamer).Move(i); // перемещение в этот город
                         Actions--;
                         break;
                     }
                 }
             }
-            else if(Mode=="Teleport"){
+            else if(Mode=="Teleport"){// режим телепортации
                 for(int i=0; i<Cities.size(); i++){
                     City temp=Cities.get(i);
                     if(temp.getX()>x-radiusX && temp.getX()<x+radiusX && 
                             temp.getY()>y-radiusY && temp.getY()<y+radiusY){
-                        if(temp.isLab()){
+                        if(temp.isLab()){// если в выбранном городе есть лаборатория
                             Gamers.get(ActGamer).Move(i); 
                             Actions--;
                             break;
                         }
                     }
                 }
-                Mode="";
+                Mode="";//режим перемещения
             }
         }
-       /* try
-        {
-            //int begin = Gamers.get(ActGamer).Position+1;
-            int end=0;
-            if (Actions>0) {
-                stmt= conn.createStatement();
-                rs=stmt.executeQuery("Select * from city where x>" +(x-radiusX)+
-                    " and x<"+(x+radiusX)+" and y>"+(y-radiusY)+
-                    " and y<"+(y+radiusY));
-                if(rs.next()){
-                    if(Mode==""){
-                        end = rs.getInt("id");
-                        rs=stmt.executeQuery("Select * from track where (begin = "+
-                            begin +" and end = " + end + ") or (begin="+end
-                            +" and end="+begin+")");
-                        if(rs.next()){
-                            Gamers.get(ActGamer).Move(end-1);
-                            Actions--;
-                        }
-                    }
-                    else if(Mode=="Chart"){
-                        end = rs.getInt("id");
-                        Gamers.get(ActGamer).Move(end-1);
-                        Actions--;
-                        Mode="";
-                    }
-                    else if(Mode=="Teleport"){
-                        end = rs.getInt("id");
-                        if(Cities.get(end-1).isLab()){
-                            Gamers.get(ActGamer).Move(end-1);
-                            Actions--;
-                            Mode="";
-                        }
-                    }
-                }
-            }                     
-        }
-        catch(Exception e){
-            int n=5;
-        }*/
     }
+    // следующий ход
     void nextTurn()
     {
         int n=Gamers.get(ActGamer).Arm.size();
-        if(n<8){
+        if(n<8){// переход хода осуществляется при наличии у игрока менее 8 карт
             StrikeTurn.removeAllElements();
             Actions=4;
             Random rnd= new Random();
-            for(int i=0;i<2;i++){
+            for(int i=0;i<2;i++){ // разыгрывание карт инфекции
                 int temp=rnd.nextInt(Cities.size());   
                 Infection(temp);
             }
-            for(int i=0;i<2;i++){
+            for(int i=0;i<2;i++){ // получение карт
                 int temp=rnd.nextInt(Cities.size()+numEpidemic);   
-                if(temp<Cities.size()){
+                if(temp<Cities.size()){ // если карта города, то в руку
                     Gamers.get(ActGamer).addCard(temp);
                 }
-                else{
+                else{ // если карта эпидемии то тройное заражение города
                     int City=rnd.nextInt(Cities.size());
                     Infection(City);
                     Infection(City);
                     Infection(City);
                 }
             }
-            if(ActGamer<NumGamers-1){
+            if(ActGamer<NumGamers-1){// переход хода к следующему игроку
                 ActGamer++;
             }
             else{
@@ -315,71 +242,39 @@ public class game {
             }
         }
     }
-    void Infection(int City){
+    // заражение города City
+    void Infection(int City){  
         StrikeTurn.add(City);
-        if(Cities.get(City).addInfect()){
-            for(int i=0; i<trackers.size(); i++){
+        if(Cities.get(City).addInfect()){ // если спровоцировал эпидемию
+            for(int i=0; i<trackers.size(); i++){ // заражение соседних городов
                if(trackers.get(i).getBegin()==City){
                   int end=trackers.get(i).getEnd();
-                  Infection(end);   
+                  Infection(end); // рекурсивный обход  
                }
                else if(trackers.get(i).getEnd()==City){
                   int end=trackers.get(i).getBegin();
-                  Infection(end);    
+                  Infection(end); // рекурсивный обход   
                }
             }
-            /*try{
-                stmt= conn.createStatement();
-                rs=stmt.executeQuery("Select * from track where begin = " + (City+1));
-                while(rs.next()){
-                    int temp=rs.getInt("end")-1;
-                    boolean flag=false;
-                    for(int i=0; i<StrikeTurn.size(); i++){
-                        if(StrikeTurn.get(i)==temp){
-                            flag=true;
-                            break;
-                        }
-                    }
-                    if(!flag){
-                        Infection(temp);
-                    }
-                }
-                rs=stmt.executeQuery("Select * from track where end = " + (City+1));
-                while(rs.next()){
-                    int temp=rs.getInt("begin")-1;
-                    boolean flag=false;
-                    for(int i=0; i<StrikeTurn.size(); i++){
-                        if(StrikeTurn.get(i)==temp){
-                            flag=true;
-                            break;
-                        }
-                    }
-                    if(!flag){
-                        Infection(temp);
-                    }
-                }
-            }
-            catch(SQLException e){
-                    
-            }*/
         }       
     }
+    // лечение города при трате конкретного игрока 1 действия
     void Hill()
     {
        int NumCity = Gamers.get(ActGamer).getPosition();
        if(Actions>0 && Cities.get(NumCity).getAlert()>0){     
-         if(boolVactine[Cities.get(NumCity).getColor()]){
+         if(boolVactine[Cities.get(NumCity).getColor()]){ // если есть лекарство от болезни
             if(Gamers.get(ActGamer).getRole()=='D'){
-                Cities.get(NumCity).HillAll();
+                Cities.get(NumCity).HillAll(); 
             }
             else{
                 Cities.get(NumCity).HillAll();
                 Actions--;
             } 
          }
-         else{
+         else{// если нет лекарства от болезни
             if(Gamers.get(ActGamer).getRole()=='D'){
-                Cities.get(NumCity).HillAll();
+                Cities.get(NumCity).HillAll(); 
                 Actions--;
             }
             else{
@@ -392,6 +287,7 @@ public class game {
     Vector<Integer> getArm(){
         return Gamers.get(ActGamer).getArm();
     }
+    //возвращает номер города с данным названием
     int FindCity(String s){
         int ret=-1;
         for(int i=0;i<Cities.size();i++){
@@ -401,6 +297,8 @@ public class game {
         }
         return ret;
     }
+    // перемещение игрока в город с номером to
+    // возвращает false в случае нехватки действий
     boolean Move(int to){
         if (Actions>0){
             Gamers.get(ActGamer).Move(to);
@@ -411,6 +309,7 @@ public class game {
             return false;
         }
     }
+    // активация рещима чартеного перелёта
     void Chart(){
         int Current=Gamers.get(ActGamer).getPosition();
         boolean flag=false;
@@ -424,19 +323,21 @@ public class game {
         }
         
     }
+    // постройка лаборатории в текущем городе
     void BuildLab()
     {
-        if(NumLaboratory<5){
+        if(NumLaboratory<5){ // лаборторий не должно быть больше 5
           int pos = Gamers.get(ActGamer).getPosition();
-          if(Gamers.get(ActGamer).getRole()=='L'){
-             if(Cities.get(pos).BuildLab()){
+          if(Gamers.get(ActGamer).getRole()=='L'){// если текущий персонаж руководитель
+             if(Cities.get(pos).BuildLab()){// ему не  нужна карта
                    Actions--;
                    NumLaboratory++;
              }
           }
-         else
-         {
+          else // если не руководитель
+          {
             boolean flag=false;
+            // проверка есть ли карта на руках
             for(int i=0;i<Gamers.get(ActGamer).getArm().size();i++){
                 if(pos==Gamers.get(ActGamer).getArm().get(i)){
                     if(Cities.get(pos).BuildLab()){
@@ -451,16 +352,19 @@ public class game {
           }
         }
     }
+    // активация режима телепортации
     void Teleport(){
         int Current=Gamers.get(ActGamer).getPosition();
         if(Cities.get(Current).isLab()){
             Mode="Teleport";;
         }      
     }
+    // создание вакцины
     void Vactine(){
-        if(Actions>0){
-        int Current=Gamers.get(ActGamer).getPosition();   
-            if(Cities.get(Current).isLab()){
+        if(Actions>0){//проверка наличия действий
+            int Current=Gamers.get(ActGamer).getPosition();   
+            if(Cities.get(Current).isLab()){//проверка наличия лаборатории
+                //необходимое количество карт для исследования
                 int NeadCard;
                 if(Gamers.get(ActGamer).getRole()=='S'){
                     NeadCard=4;
@@ -471,6 +375,7 @@ public class game {
                 Vector<Integer> Arm = Gamers.get(ActGamer).getArm();
                 int a[] = new int[4];
                 int ret=-1;
+                // подсчёт количества карт разного цвета
                 for(int i=0;i<Arm.size();i++){
                     int Num=Arm.get(i);
                     a[Cities.get(Num).getColor()]++;
@@ -480,6 +385,8 @@ public class game {
                     }
                 }
                 if(ret>=0 && (!boolVactine[ret])){
+                    // если найден цвет, для которого имеются необходимые карты
+                    // удалить карты
                     for(int i=Arm.size()-1;i>=0;i--){
                         int Num=Arm.get(i);
                         if (Cities.get(Num).getColor()==ret){
@@ -491,6 +398,7 @@ public class game {
                         //break;
                         }
                     }
+                    // изобретение вакцины
                     boolVactine[ret]=true;
                     Actions--;
                 }
@@ -501,6 +409,7 @@ public class game {
        return ActGamer; 
     }
     
+    // проверка есть ли вакцина номер Vactine
     boolean getVactine(int  Vactine){
         return boolVactine[Vactine];
     }
