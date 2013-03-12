@@ -25,6 +25,8 @@ public class game {
     int Rate; 
     int NumLaboratory; // количество лабораторий
     int numEpidemic; // количество карт эпидемий в колоде
+    int numVactine; // количество лекарств
+    int remCards; // количество карт, оставшихся в колоде
     boolean boolVactine[]; // найдено ли лекарство от конкрктного заболевания
     String Mode; // режим перемещения(перемещение, телепортация, чартерный рейс)
     Vector<Integer> StrikeTurn; /* номера городов, в которых 
@@ -34,6 +36,7 @@ public class game {
     Vector<City> Cities=new Vector(); /* список городов*/
     Vector<track> trackers=new Vector(); /* список путей*/
     game(int numgamers, int level){
+        numVactine=0;
         boolVactine=new boolean[4];
         for(int i=0;i<4;i++){
             boolVactine[i]=false;
@@ -118,6 +121,7 @@ public class game {
               }
             }
         }
+        remCards=Cities.size()+numEpidemic;
         // набор карт в руки игроков
         for(int i=0;i<numgamers;i++){
             gamer temp=new gamer(i+1, 0);
@@ -125,8 +129,10 @@ public class game {
             for(int j=0; j<6-numgamers; j++){
                 int tempcity=rnd.nextInt(Cities.size());
                 Gamers.get(i).addCard(tempcity);
+                remCards--;
             }
         }
+        
         NumGamers=numgamers;
         ActGamer=0;
         Level=level;
@@ -223,6 +229,7 @@ public class game {
                 Infection(temp);
             }
             for(int i=0;i<2;i++){ // получение карт
+                remCards--;
                 int temp=rnd.nextInt(Cities.size()+numEpidemic);   
                 if(temp<Cities.size()){ // если карта города, то в руку
                     Gamers.get(ActGamer).addCard(temp);
@@ -400,6 +407,7 @@ public class game {
                     }
                     // изобретение вакцины
                     boolVactine[ret]=true;
+                    numVactine++;
                     Actions--;
                 }
             }
@@ -412,5 +420,27 @@ public class game {
     // проверка есть ли вакцина номер Vactine
     boolean getVactine(int  Vactine){
         return boolVactine[Vactine];
+    }
+    
+    boolean isWin(){
+        if(numVactine<4){
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    
+    boolean isLosing(){
+        if(remCards>=0){
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    
+    int getremCards(){
+        return remCards;
     }
 }

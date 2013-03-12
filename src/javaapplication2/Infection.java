@@ -27,14 +27,11 @@ public class Infection extends JFrame{
     final int radiusCity=30;// отображаемый радиус города 
     static Button Next=new Button("Next turn");
     static Button Hill=new Button("Hill");
-    static Button Reset=new Button("Reset");
-    static Button Use=new Button("MoveTo");
     static Button Chart=new Button("Chart");
     static Button Build=new Button("Build");
     static Button Vactine=new Button("Vactine");
     static Button Teleport=new Button("Teleport");
     static Image Background;
-    static Vector<Button> Cards = new Vector();// кнопки карт
     static game logic; // класс игры
     static Infection form;
     static int actCard; // номер активной карты
@@ -57,12 +54,6 @@ public class Infection extends JFrame{
         Hill.setSize(200, 40);
         Hill.setVisible(true);
         c.add(Hill);
-        Reset.setSize(200, 40);
-        Reset.setVisible(true);
-        c.add(Reset);
-        Use.setSize(200, 40);
-        Use.setVisible(true);
-        c.add(Use);
         Chart.setSize(200, 40);
         Chart.setVisible(true);
         c.add(Chart);
@@ -74,16 +65,7 @@ public class Infection extends JFrame{
         c.add(Vactine);
         Teleport.setSize(200, 40);
         Teleport.setVisible(true);
-        c.add(Teleport);
-        for(int i=0;i<9;i++){
-            Cards.add(new Button());
-            //Cards.get(i).setLocation(0,500);
-            Cards.get(i).setLabel("sandro23");
-            Cards.get(i).setActionCommand(""+i);
-            Cards.get(i).setVisible(true);
-            c.add(Cards.get(i));
-        }
-        
+        c.add(Teleport);        
         //setSize(1000, 700);
         actCard=-1;
     }
@@ -112,17 +94,7 @@ public class Infection extends JFrame{
         num=Cities.size();
         for(int i=0; i<num; i++)
         {
-            int color=Cities.get(i).getColor();
-            switch(color){
-            case 0:    
-                g.setColor(Color.BLACK); break;
-            case 1:
-                g.setColor(Color.BLUE); break;
-            case 2:
-                g.setColor(Color.YELLOW); break;
-            case 3:
-                g.setColor(Color.ORANGE); break;
-            }
+            setColor(g, Cities.get(i).getColor());
             
             int X=Cities.get(i).getX();
             int Y=Cities.get(i).getY();
@@ -155,52 +127,71 @@ public class Infection extends JFrame{
         }
         
         // отображение информирующей строки
+        
         Font H1=new Font(null, num, 50);
         Font normal = new Font(null, num, 12);
         g.setFont(H1);
-        String strTurn = Gamers.get(logic.getActGamer()).getRoleStr()+
-                "'s turn("+logic.getActions()+")";
-        g.clearRect(W/4, 40, W/2+20,80);
-        g.drawString(strTurn, W/4, 100);
+        String strTurn;
+        if(logic.isWin()){
+           strTurn = "WE WIIIIIIIIIIIIIIIIIIIIIIIIIIIN";
+        }
+        else if(logic.isLosing()){
+           strTurn = "WE LOOOOOOOOOOOOOOOOOOOOOOOOOSING"; 
+        }
+        else{
+           strTurn = Gamers.get(logic.getActGamer()).getRoleStr()+
+                "'s turn("+logic.getActions()+") remaining cards - " 
+                   + logic.remCards ;
+        }
+        g.clearRect(0, 40, W,80);
+        g.drawString(strTurn, 0, 100);
         g.setFont(normal);
         
-        //отбражение карт на руках
+        //новое отображение карт на руках
         Vector<Integer> Arm = logic.getArm();
         int n=Arm.size();
         for(int i=0;i<9;i++){
             if(i<n){
                 String s=Cities.get(Arm.get(i)).getName();
                 //Cards.get(i).setLocation(0,800);
-                Cards.get(i).setLabel(s);
                 int color=Cities.get(Arm.get(i)).getColor();
-                switch(color){
-                case 0:    
-                    Cards.get(i).setBackground(Color.BLACK); 
-                    Cards.get(i).setForeground(Color.WHITE);break;
-                case 1:
-                    Cards.get(i).setBackground(Color.BLUE); 
-                    Cards.get(i).setForeground(Color.WHITE);break;
-                case 2:
-                    Cards.get(i).setBackground(Color.YELLOW); 
-                    Cards.get(i).setForeground(Color.BLACK);break;
-                case 3:
-                    Cards.get(i).setBackground(Color.ORANGE);
-                    Cards.get(i).setForeground(Color.WHITE);break;
+                setColor(g,color);
+                g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
+                g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
+                if(color<2){
+                    g.setColor(Color.WHITE);
                 }
-            }
-            else{
-                Cards.get(i).setBackground(Color.WHITE);
-                Cards.get(i).setLabel("       ");
-            }     
+                else{
+                    g.setColor(Color.BLACK);
+                }
+                g.drawString(s, 70, (H-10)-(i+1)*35+20);
+                g.drawString("<-", 15, (H-10)-(i+1)*35+20);
+            }  
         }
+        
+        
         
         // отображение лекарств
         for(int i=0; i<4; i++){
-            g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
+            if(logic.getVactine(i)){
+                setColor(g, i);
+                g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
+            }
         }
     }
    
-    //private void setColor(Graphics g)
+    private void setColor(Graphics g, int Num){
+       switch(Num){
+       case 0:    
+          g.setColor(Color.BLACK); break;
+       case 1:
+          g.setColor(Color.BLUE); break;
+       case 2:
+          g.setColor(Color.YELLOW); break;
+       case 3:
+          g.setColor(Color.ORANGE); break;
+       }
+    }
     
     // обработка нажатия кнопок
     public boolean action(Event evt, Object arg) {
@@ -261,7 +252,7 @@ public class Infection extends JFrame{
     public static void main(String[] args) {
         // TODO code application logic here
         //String s=NumGamers.getText();
-        logic = new game(5,1);// создание класса игры
+        logic = new game(1,1);// создание класса игры
         form = new Infection("Infection"); // создание окна программы
         
     }
@@ -285,6 +276,22 @@ public class Infection extends JFrame{
           public void mouseClicked(MouseEvent e) {
               int X=e.getX()-radiusCity/2;
               int Y=e.getY()-radiusCity/2;
+              // обработка нажатия кнопок
+              
+              //g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
+              //g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
+              
+              int ActCard=(form.getHeight()-Y+5)/35-1;
+              Vector<Integer> Arm=logic.getArm();
+              //сброс
+              if(X>=0 && X<=30){
+                Arm.remove(ActCard);
+              }
+              else if(X>=40 && X<=170){
+                if(logic.Move(Arm.get(ActCard))){
+                  Arm.remove(ActCard);
+                }
+              }     
               logic.onClick(X*1000/form.getWidth(),Y*1000/form.getHeight(),
                       radiusCity*1000/form.getWidth(),
                       radiusCity*1000/form.getHeight());
