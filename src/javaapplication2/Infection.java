@@ -33,10 +33,11 @@ public class Infection extends JFrame{
     static Button Teleport=new Button("Teleport");
     static Image Background;
     static game logic; // класс игры
-    static Infection form;
+    //static Infection form;
     static int actCard; // номер активной карты
-    Infection(String s){
+    Infection(String s, int iNumGamers, int iLevel){
         super(s);
+        logic = new game(iNumGamers, iLevel);// создание класса игры
         getContentPane().setBackground(Color.WHITE);
         Toolkit tool= getToolkit();
         Background = tool.createImage(Canvas.class.getResource("/javaapplication2/mainback.jpg"));
@@ -249,28 +250,9 @@ public class Infection extends JFrame{
         repaint();
         return true;
     }
-    public static void main(String[] args) {
-        // TODO code application logic here
-        //String s=NumGamers.getText();
-        logic = new game(1,1);// создание класса игры
-        form = new Infection("Infection"); // создание окна программы
-        
-    }
-  /*  public static void main(String[] args) {
-          javax.swing.SwingUtilities.invokeLater(new Runnable() {
-               public void run() {
-                    JFrame.setDefaultLookAndFeelDecorated(true);
-                    JFrame frame = new TestFrame();
-                    frame.setPreferredSize(new Dimension(330, 160));
-                    frame.pack();
-                    frame.setLocationRelativeTo(null);
-                    frame.setVisible(true);
-               }
-          });
-     }*/
-     
-     // обработчик действий мыши
-     public class CustomListener implements MouseListener {
+    
+    
+    class CustomListener implements MouseListener {
           
           //событи происходящее при клике мыши
           public void mouseClicked(MouseEvent e) {
@@ -281,7 +263,7 @@ public class Infection extends JFrame{
               //g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
               //g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
               
-              int ActCard=(form.getHeight()-Y+5)/35-1;
+              int ActCard=(getHeight()-Y+5)/35-1;
               Vector<Integer> Arm=logic.getArm();
               //сброс
               if(X>=0 && X<=30){
@@ -292,10 +274,10 @@ public class Infection extends JFrame{
                   Arm.remove(ActCard);
                 }
               }     
-              logic.onClick(X*1000/form.getWidth(),Y*1000/form.getHeight(),
-                      radiusCity*1000/form.getWidth(),
-                      radiusCity*1000/form.getHeight());
-              form.repaint();
+              logic.onClick(X*1000/getWidth(),Y*1000/getHeight(),
+                      radiusCity*1000/getWidth(),
+                      radiusCity*1000/getHeight());
+              repaint();
           }
 
           public void mouseEntered(MouseEvent e) {
@@ -313,5 +295,29 @@ public class Infection extends JFrame{
           public void mouseReleased(MouseEvent e) {
                
           }
-     }
+        
+        
+    }
+    /*public static void main(String[] args) {
+        // TODO code application logic here
+        //String s=NumGamers.getText();
+        logic = new game(3,4);// создание класса игры
+        form = new Infection("Infection"); // создание окна программы
+        
+    }*/
+  /*  public static void main(String[] args) {
+          javax.swing.SwingUtilities.invokeLater(new Runnable() {
+               public void run() {
+                    JFrame.setDefaultLookAndFeelDecorated(true);
+                    JFrame frame = new TestFrame();
+                    frame.setPreferredSize(new Dimension(330, 160));
+                    frame.pack();
+                    frame.setLocationRelativeTo(null);
+                    frame.setVisible(true);
+               }
+          });
+     }*/
+     
+     // обработчик действий мыши
+     
 }
