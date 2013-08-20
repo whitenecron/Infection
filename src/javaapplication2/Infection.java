@@ -35,6 +35,7 @@ public class Infection extends JFrame{
     static game logic; // класс игры
     //static Infection form;
     static int actCard; // номер активной карты
+    static int Left=0,Top=0,Width=500,Height=500;
     Infection(String s, int iNumGamers, int iLevel){
         super(s);
         logic = new game(iNumGamers, iLevel);// создание класса игры
@@ -71,6 +72,15 @@ public class Infection extends JFrame{
         actCard=-1;
     }
     
+    int getPaintX(int iLogicX){
+        int W=getWidth();
+        return (iLogicX-Left)*W/Width;
+    }
+    
+    int getPaintY(int iLogicY){
+        int H=getHeight();
+        return (iLogicY-Top)*H/Height;
+    }
     
     public void paint(Graphics g)
     {        
@@ -78,17 +88,17 @@ public class Infection extends JFrame{
         int H=getHeight(),W=getWidth();
         g.clearRect(0, 0, W, H);
         
-        g.drawImage(Background,0,0,W,H,this);
+        g.drawImage(Background,getPaintX(0),getPaintY(0),getPaintX(1000)-getPaintX(0),getPaintY(1000)-getPaintY(0),this);
         g.setColor(Color.red);
         Vector<track> Trackers = logic.getTrackers();
         int num=Trackers.size();
         // отображение линий путей
         for(int i=0;i<num;i++){
-            int XBegin=Trackers.get(i).XBegin;
-            int YBegin=Trackers.get(i).YBegin;
-            int XEnd=Trackers.get(i).XEnd;
-            int YEnd=Trackers.get(i).YEnd;
-            g.drawLine(XBegin*W/1000+radiusCity/2, YBegin*H/1000+radiusCity/2, XEnd*W/1000+radiusCity/2, YEnd*H/1000+radiusCity/2);
+            int XBegin=getPaintX(Trackers.get(i).XBegin);
+            int YBegin=getPaintY(Trackers.get(i).YBegin);
+            int XEnd=getPaintX(Trackers.get(i).XEnd);
+            int YEnd=getPaintY(Trackers.get(i).YEnd);
+            g.drawLine(XBegin+radiusCity/2, YBegin+radiusCity/2, XEnd+radiusCity/2, YEnd+radiusCity/2);
         }
         // отображение городов
         Vector<City> Cities = logic.getCities();
@@ -99,14 +109,14 @@ public class Infection extends JFrame{
             
             int X=Cities.get(i).getX();
             int Y=Cities.get(i).getY();
-            g.drawOval(X*W/1000, Y*H/1000,radiusCity,radiusCity);
+            g.drawOval(getPaintX(X), getPaintY(Y),radiusCity,radiusCity);
             Integer Alert = Cities.get(i).getAlert();
             g.setColor(Color.BLACK);
-            g.drawString(Alert.toString(),X*W/1000+radiusCity/2, Y*H/1000+radiusCity/2);
+            g.drawString(Alert.toString(),getPaintX(X)+radiusCity/2, getPaintY(Y)+radiusCity/2);
             String Name = Cities.get(i).getName();
-            g.drawString(Name,X*W/1000+radiusCity, Y*H/1000+radiusCity);
+            g.drawString(Name,getPaintX(X)+radiusCity, getPaintY(Y)+radiusCity);
             if(Cities.get(i).isLab()){
-                g.drawLine(X*W/1000+radiusCity/2, Y*H/1000+radiusCity/2,X*W/1000+radiusCity/2, Y*H/1000-radiusCity/2);
+                g.drawLine(getPaintX(X)+radiusCity/2, getPaintY(Y)+radiusCity/2,getPaintX(X)+radiusCity/2, getPaintY(Y)-radiusCity/2);
             }
         }
         //отображение игроков 
@@ -119,11 +129,11 @@ public class Infection extends JFrame{
             int Y1=(int)(radiusCity*0.75*Math.sin(6.28*(Gamers.get(i).getRoleNum()-1.5)/6))+radiusCity/4;
             if(logic.getActGamer()==i){
                 g.setColor(Color.RED);
-                g.fillOval(X*W/1000+X1, Y*H/1000+Y1,radiusCity/2,radiusCity/2);
+                g.fillOval(getPaintX(X)+X1, getPaintY(Y)+Y1,radiusCity/2,radiusCity/2);
                 g.setColor(Color.BLACK);
             }
             else{
-                g.fillOval(X*W/1000+X1, Y*H/1000+Y1,radiusCity/2,radiusCity/2);
+                g.fillOval(getPaintX(X)+X1, getPaintY(Y)+Y1,radiusCity/2,radiusCity/2);
             }
         }
         
@@ -253,9 +263,10 @@ public class Infection extends JFrame{
     
     
     class CustomListener implements MouseListener {
-          
+          int XPush=0,YPush=0;
           //событи происходящее при клике мыши
           public void mouseClicked(MouseEvent e) {
+              //X=e.getX()*Width/100+getWidth()*Left/100-radiusCity/2;
               int X=e.getX()-radiusCity/2;
               int Y=e.getY()-radiusCity/2;
               // обработка нажатия кнопок
@@ -274,26 +285,37 @@ public class Infection extends JFrame{
                   Arm.remove(ActCard);
                 }
               }     
-              logic.onClick(X*1000/getWidth(),Y*1000/getHeight(),
-                      radiusCity*1000/getWidth(),
-                      radiusCity*1000/getHeight());
+              logic.onClick(e.getX()*Width/getWidth()+Left-radiusCity/2,e.getY()*Height/getHeight()+Top-radiusCity/2,
+                      radiusCity*Width/getWidth(),
+                      radiusCity*Height/getHeight());
               repaint();
           }
 
           public void mouseEntered(MouseEvent e) {
                
+                   
+                   
+               
           }
 
           public void mouseExited(MouseEvent e) {
-              
+             
           }
 
           public void mousePressed(MouseEvent e) {
               
+              XPush=e.getX();
+              YPush=e.getY();
           }
 
           public void mouseReleased(MouseEvent e) {
-               
+              Left-=(e.getX()-XPush)/3;
+              if(Left<0) Left=0;
+              if(Left+Width>1000)Left=1000-Width;
+              Top-=(e.getY()-YPush)/3;
+              if(Top<0) Top=0;
+              if(Top+Height>1000)Top=1000-Height;
+              repaint();
           }
         
         
