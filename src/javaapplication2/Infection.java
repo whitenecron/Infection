@@ -24,13 +24,16 @@ public class Infection extends JFrame{
     /**
      * @param args the command line arguments
      */
-    final int radiusCity=30;// отображаемый радиус города 
-    static Button Next=new Button("Next turn");
-    static Button Hill=new Button("Hill");
-    static Button Chart=new Button("Chart");
-    static Button Build=new Button("Build");
-    static Button Vactine=new Button("Vactine");
-    static Button Teleport=new Button("Teleport");
+    final int radiusCity=30;// отображаемый радиус города
+    
+    final int SizeBigButton=100;
+    final int NUM_BIG_BUTTON = 5;
+    final int NEXT_TURN = 0;
+    final int HILL = NEXT_TURN+1;
+    final int BUILD = HILL+1;
+    final int VACTINE = BUILD+1;
+    final int TELEPORT = VACTINE+1;
+    Image BigButtons[]=new Image[NUM_BIG_BUTTON];
     static Image Background;
     static game logic; // класс игры
     //static Infection form;
@@ -41,33 +44,17 @@ public class Infection extends JFrame{
         logic = new game(iNumGamers, iLevel);// создание класса игры
         getContentPane().setBackground(Color.WHITE);
         Toolkit tool= getToolkit();
-        Background = tool.createImage(Canvas.class.getResource("/javaapplication2/mainback.jpg"));
+        Background = tool.createImage(Canvas.class.getResource("/picture/mainback.jpg"));
+        BigButtons[NEXT_TURN]=tool.createImage(Canvas.class.getResource("/picture/nextturn.jpg"));
+        BigButtons[HILL]=tool.createImage(Canvas.class.getResource("/picture/hill.jpg"));
+        BigButtons[TELEPORT]=tool.createImage(Canvas.class.getResource("/picture/teleport.jpg"));
+        BigButtons[VACTINE]=tool.createImage(Canvas.class.getResource("/picture/vactine.jpg"));
+        BigButtons[BUILD]=tool.createImage(Canvas.class.getResource("/picture/build.jpg"));
         setSize(1200, 700);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        Container c = getContentPane();
-        c.setLayout(new FlowLayout());
-        c.setSize(400,400);
-        addMouseListener(new CustomListener());
-        Next.setSize(200, 40);
-        Next.setVisible(true);
-        c.add(Next);
-        Hill.setSize(200, 40);
-        Hill.setVisible(true);
-        c.add(Hill);
-        Chart.setSize(200, 40);
-        Chart.setVisible(true);
-        c.add(Chart);
-        Build.setSize(200, 40);
-        Build.setVisible(true);
-        c.add(Build);
-        Vactine.setSize(200, 40);
-        Vactine.setVisible(true);
-        c.add(Vactine);
-        Teleport.setSize(200, 40);
-        Teleport.setVisible(true);
-        c.add(Teleport);        
+        addMouseListener(new CustomListener());      
         //setSize(1000, 700);
         actCard=-1;
     }
@@ -178,6 +165,7 @@ public class Infection extends JFrame{
                 g.drawString(s, 70, (H-10)-(i+1)*35+20);
                 g.drawString("<-", 15, (H-10)-(i+1)*35+20);
             }  
+            
         }
         
         
@@ -188,6 +176,9 @@ public class Infection extends JFrame{
                 setColor(g, i);
                 g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
             }
+        }
+        for(int i=0;i<NUM_BIG_BUTTON;i++){
+            g.drawImage(BigButtons[i],W-SizeBigButton,H-SizeBigButton*(i+1),SizeBigButton,SizeBigButton,this);
         }
     }
    
@@ -202,65 +193,7 @@ public class Infection extends JFrame{
        case 3:
           g.setColor(Color.ORANGE); break;
        }
-    }
-    
-    // обработка нажатия кнопок
-    public boolean action(Event evt, Object arg) {
-
-        if(arg=="Next turn"){
-            logic.nextTurn();
-            actCard=-1;
-        }
-        else if(arg=="Hill"){
-            logic.Hill();
-        }
-        else if(arg=="Reset"){
-            if (actCard>=0){
-                Vector<Integer> Arm=logic.getArm();
-                for(int i=0; i<Arm.size();i++)
-                {
-                    if(Arm.get(i)==actCard){
-                        Arm.remove(i);
-                        break;
-                    }
-                }
-            }
-            actCard=-1;
-        }
-        else if(arg=="MoveTo"){
-            if (actCard>=0){
-                if(logic.Move(actCard)){
-                    Vector<Integer> Arm=logic.getArm();
-                    for(int i=0; i<Arm.size();i++)
-                    {
-                        if(Arm.get(i)==actCard){
-                            Arm.remove(i);
-                            break;
-                        }
-                    }
-                }
-                actCard=-1;
-            }
-        }
-         else if(arg=="Chart"){
-            logic.Chart();
-        }
-         else if(arg=="Build"){
-             logic.BuildLab();
-         }
-         else if(arg=="Teleport"){
-             logic.Teleport();
-         }
-         else if(arg=="Vactine"){
-             logic.Vactine();
-         }
-        else{
-            actCard=logic.FindCity(arg.toString());
-        }
-        repaint();
-        return true;
-    }
-    
+    } 
     
     class CustomListener implements MouseListener {
           int XPush=0,YPush=0;
@@ -284,10 +217,31 @@ public class Infection extends JFrame{
                 if(logic.Move(Arm.get(ActCard))){
                   Arm.remove(ActCard);
                 }
-              }     
-              logic.onClick(e.getX()*Width/getWidth()+Left-radiusCity/2,e.getY()*Height/getHeight()+Top-radiusCity/2,
+              }
+              else if(X>getWidth()-SizeBigButton-15 && Y>getHeight()-SizeBigButton*NUM_BIG_BUTTON-10){
+                int Num=(getHeight()-Y-15)/SizeBigButton;  
+                if(Num==NEXT_TURN){
+                  logic.nextTurn();
+                  actCard=-1;  
+                }
+                else if(Num==HILL){
+                  logic.Hill(); 
+                }
+                else if(Num==BUILD){
+                  logic.BuildLab();
+                }
+                else if(Num==VACTINE){
+                  logic.Vactine();
+                }
+                else if(Num==TELEPORT){
+                  logic.Teleport();
+                } 
+              }
+              else{
+                logic.onClick(e.getX()*Width/getWidth()+Left-radiusCity/2,e.getY()*Height/getHeight()+Top-radiusCity/2,
                       radiusCity*Width/getWidth(),
                       radiusCity*Height/getHeight());
+              }
               repaint();
           }
 
