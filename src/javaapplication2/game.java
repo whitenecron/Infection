@@ -22,19 +22,24 @@ public class game {
     int Level; // уровень сложности
     int ActGamer; // текщий игрок
     int Actions; // количесво оставшихся действий текущего игрока в этом ходу 
-    int Rate; 
+    int Danger; // количество вспыхнувших эпидемий 
     int NumLaboratory; // количество лабораторий
     int numEpidemic; // количество карт эпидемий в колоде
     int numVactine; // количество лекарств
     int remCards; // количество карт, оставшихся в колоде
     boolean boolVactine[]; // найдено ли лекарство от конкрктного заболевания
     String Mode; // режим перемещения(перемещение, телепортация, чартерный рейс)
-    Vector<Integer> StrikeTurn; /* номера городов, в которых 
+    Vector<Integer> ArmKolod=new Vector(); // колода карт действий игрока
+    final int CARD_EPIDEM=-1;
+    Vector<Integer> StrikeTurn; /* номера городов, в которых
      * произошли эпидемии на этом ходу
      */
+    AppEpidem Info=new AppEpidem();
     Vector<gamer> Gamers=new Vector(); /* список игроков*/
     Vector<City> Cities=new Vector(); /* список городов*/
     Vector<track> trackers=new Vector(); /* список путей*/
+    AppHelp Message = new AppHelp();
+    
     game(int numgamers, int level){
         numVactine=0;
         boolVactine=new boolean[4];
@@ -46,7 +51,6 @@ public class game {
          */     
         StrikeTurn=new Vector();
         Mode="";
-        Rate=4;
         Random rnd= new Random();
         
         // считывание из файла и формирование списка городов   
@@ -109,6 +113,30 @@ public class game {
         catch(Exception e){
             int n=5;  
         }
+        
+        // формирование колоды действий
+        for(int i=0;i<Cities.size();i++){
+            int Current;
+            boolean flag;
+            do{
+              flag=false;
+              Current=rnd.nextInt(Cities.size());
+              for(int j=0;j<i;j++){
+                 if(ArmKolod.get(j)==Current){
+                     flag=true;
+                 } 
+              }
+            }while(flag);        
+            ArmKolod.add(Current);
+        }
+        
+        //добавление карт эпидемий в колоду
+        int Counter=(6-NumGamers)*NumGamers, Interval=(Cities.size()-Counter)/numEpidemic;
+        for(int i=0;i<numEpidemic;i++){
+            ArmKolod.add(Counter+rnd.nextInt(Interval),CARD_EPIDEM);
+            Counter+=Interval+1;
+        }
+        
         NumLaboratory=1;
         Cities.get(0).BuildLab(); // постройка 1ой лаборатории в Москве
         // начальное заражение городов
@@ -121,15 +149,15 @@ public class game {
               }
             }
         }
+        Danger=0;
         remCards=Cities.size()+numEpidemic;
         // набор карт в руки игроков
         for(int i=0;i<numgamers;i++){
             gamer temp=new gamer(i+1, 0);
             Gamers.add(temp);
-            for(int j=0; j<6-numgamers; j++){
-                int tempcity=rnd.nextInt(Cities.size());
-                Gamers.get(i).addCard(tempcity);
-                remCards--;
+            ActGamer=i;
+            for(int j=0; j<6-numgamers; j++){             
+                addCard();
             }
         }
         
@@ -139,6 +167,7 @@ public class game {
         Actions=4;
         
     }
+    
     Vector<City> getCities()
     {
         return Cities;
@@ -154,6 +183,10 @@ public class game {
     int getActions()
     {
         return Actions;
+    }
+    int getDanger()
+    {
+        return Danger;
     }
     /* метод обработки клика в координатах x y
      * int radiusX, int radiusY радиус города на форме
@@ -219,51 +252,63 @@ public class game {
     // следующий ход
     void nextTurn()
     {
-        int n=Gamers.get(ActGamer).Arm.size();
-        if(n<8){// переход хода осуществляется при наличии у игрока менее 8 карт
-            StrikeTurn.removeAllElements();
-            Actions=4;
-            Random rnd= new Random();
-            for(int i=0;i<2;i++){ // разыгрывание карт инфекции
-                int temp=rnd.nextInt(Cities.size());   
-                Infection(temp);
-            }
-            for(int i=0;i<2;i++){ // получение карт
-                remCards--;
-                int temp=rnd.nextInt(Cities.size()+numEpidemic);   
-                if(temp<Cities.size()){ // если карта города, то в руку
-                    Gamers.get(ActGamer).addCard(temp);
+        //проверка на использование ходов и выдача сообщения
+        if(Actions==0){      
+            int n=Gamers.get(ActGamer).Arm.size();
+            if(n<8){// переход хода осуществляется при наличии у игрока менее 8 карт
+                StrikeTurn.removeAllElements();
+                Actions=4;
+                Random rnd= new Random();
+                for(int i=0;i<2;i++){ // разыгрывание карт инфекции
+                    int temp=rnd.nextInt(Cities.size());   
+                    Infection(temp);
                 }
-                else{ // если карта эпидемии то тройное заражение города
-                    int City=rnd.nextInt(Cities.size());
-                    Infection(City);
-                    Infection(City);
-                    Infection(City);
+                for(int i=0;i<2;i++){ // получение карт  
+                    if(addCard()){ // если карта эпидемии то тройное заражение города
+                        int City=rnd.nextInt(Cities.size());
+                        Infection(City);
+                        Infection(City);
+                        Infection(City);
+                    }
                 }
-            }
-            if(ActGamer<NumGamers-1){// переход хода к следующему игроку
-                ActGamer++;
+                Info.ShowEpidem(StrikeTurn, Cities);
+                if(ActGamer<NumGamers-1){// переход хода к следующему игроку
+                    ActGamer++;
+                }
+                else{
+                    ActGamer=0;
+                }
             }
             else{
-                ActGamer=0;
+                Message.Show("Drop card to 8");
             }
+        }
+        else{
+            Message.Show("Action is remain");
         }
     }
     // заражение города City
-    void Infection(int City){  
-        StrikeTurn.add(City);
-        if(Cities.get(City).addInfect()){ // если спровоцировал эпидемию
-            for(int i=0; i<trackers.size(); i++){ // заражение соседних городов
-               if(trackers.get(i).getBegin()==City){
-                  int end=trackers.get(i).getEnd();
-                  Infection(end); // рекурсивный обход  
-               }
-               else if(trackers.get(i).getEnd()==City){
-                  int end=trackers.get(i).getBegin();
-                  Infection(end); // рекурсивный обход   
-               }
-            }
-        }       
+    void Infection(int City){ 
+        boolean Ret=false;
+        for(int j=0;j<StrikeTurn.size();j++){
+            if (StrikeTurn.get(j)==City) Ret=true;
+        }
+        if(!Ret){
+            StrikeTurn.add(City);
+            if(Cities.get(City).addInfect()){ // если спровоцировал эпидемию
+                Danger++;
+                for(int i=0; i<trackers.size(); i++){ // заражение соседних городов
+                   if(trackers.get(i).getBegin()==City){
+                      int end=trackers.get(i).getEnd();
+                      Infection(end); // рекурсивный обход  
+                   }
+                   else if(trackers.get(i).getEnd()==City){
+                      int end=trackers.get(i).getBegin();
+                      Infection(end); // рекурсивный обход   
+                   }
+                }
+            }      
+        }
     }
     // лечение города при трате конкретного игрока 1 действия
     void Hill()
@@ -313,58 +358,69 @@ public class game {
             return true;
         }
         else{
+            HaveNotAction();
             return false;
         }
     }
     // активация рещима чартеного перелёта
     void Chart(){
-        int Current=Gamers.get(ActGamer).getPosition();
-        boolean flag=false;
-        for(int i=0;i<Cities.size();i++){
-            if(Current==Gamers.get(ActGamer).getArm().get(i)){
-                flag=true;
-                Gamers.get(ActGamer).getArm().remove(i);
-                Mode="Chart";
-                break;
+        if(Actions>0){
+            int Current=Gamers.get(ActGamer).getPosition();
+            boolean flag=false;
+            for(int i=0;i<Cities.size();i++){
+                if(Current==Gamers.get(ActGamer).getArm().get(i)){
+                    flag=true;
+                    Gamers.get(ActGamer).getArm().remove(i);
+                    Mode="Chart";
+                    break;
+                }
             }
         }
-        
+        else HaveNotAction();
     }
     // постройка лаборатории в текущем городе
     void BuildLab()
     {
-        if(NumLaboratory<5){ // лаборторий не должно быть больше 5
-          int pos = Gamers.get(ActGamer).getPosition();
-          if(Gamers.get(ActGamer).getRole()=='L'){// если текущий персонаж руководитель
-             if(Cities.get(pos).BuildLab()){// ему не  нужна карта
-                   Actions--;
-                   NumLaboratory++;
-             }
-          }
-          else // если не руководитель
-          {
-            boolean flag=false;
-            // проверка есть ли карта на руках
-            for(int i=0;i<Gamers.get(ActGamer).getArm().size();i++){
-                if(pos==Gamers.get(ActGamer).getArm().get(i)){
-                    if(Cities.get(pos).BuildLab()){
-                        flag=true;
-                        Gamers.get(ActGamer).getArm().remove(i);
-                        Actions--;
-                        NumLaboratory++;
+        if(Actions>0){
+            if(NumLaboratory<5){ // лаборторий не должно быть больше 5
+              int pos = Gamers.get(ActGamer).getPosition();
+              if(Gamers.get(ActGamer).getRole()=='L'){// если текущий персонаж руководитель
+                 if(Cities.get(pos).BuildLab()){// ему не  нужна карта
+                       Actions--;
+                       NumLaboratory++;
+                 }
+              }
+              else // если не руководитель
+              {
+                boolean flag=false;
+                // проверка есть ли карта на руках
+                for(int i=0;i<Gamers.get(ActGamer).getArm().size();i++){
+                    if(pos==Gamers.get(ActGamer).getArm().get(i)){
+                        if(Cities.get(pos).BuildLab()){
+                            flag=true;
+                            Gamers.get(ActGamer).getArm().remove(i);
+                            Actions--;
+                            NumLaboratory++;
+                        }
+                        break;
                     }
-                    break;
                 }
+              }
             }
-          }
+            else Message.Show("You haven't card this City");
         }
+        else HaveNotAction();
     }
     // активация режима телепортации
     void Teleport(){
-        int Current=Gamers.get(ActGamer).getPosition();
-        if(Cities.get(Current).isLab()){
-            Mode="Teleport";;
-        }      
+        if(Actions>0){
+            int Current=Gamers.get(ActGamer).getPosition();
+            if(Cities.get(Current).isLab()){
+                Mode="Teleport";;
+            }
+            else Message.Show("This city haven't laboratory");
+        }
+        else HaveNotAction();
     }
     // создание вакцины
     void Vactine(){
@@ -410,8 +466,17 @@ public class game {
                     numVactine++;
                     Actions--;
                 }
-            }
+                else{
+                    if(ret==-1){
+                        Message.Show("Nead yeat " + NeadCard + " same color");
+                    }
+                    else{
+                        Message.Show("This city haven't laboratory");
+                    }
+                }
+            } else Message.Show("You have this vactine");
         }
+        else HaveNotAction();
     }
     int getActGamer(){
        return ActGamer; 
@@ -432,7 +497,7 @@ public class game {
     }
     
     boolean isLosing(){
-        if(remCards>=0){
+        if(remCards>=0 || Danger<8){
             return false;
         }
         else {
@@ -442,5 +507,25 @@ public class game {
     
     int getremCards(){
         return remCards;
+    }
+    
+    // true - карта эпидемии
+    private boolean  addCard(){
+        if(ArmKolod.size()>0){
+            int CurrentCard=ArmKolod.get(0);
+            ArmKolod.remove(0);
+            remCards--;
+            if(CurrentCard==CARD_EPIDEM){
+                return false;
+            }
+            else{
+                Gamers.get(ActGamer).addCard(CurrentCard);
+            }
+            return true;
+        }
+        return true;
+    }
+    private void HaveNotAction(){
+        Message.Show("You haven't actions");
     }
 }

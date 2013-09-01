@@ -1,6 +1,6 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Основное окно игры
+ * карта мира
  */
 package javaapplication2;
 
@@ -19,6 +19,7 @@ import java.text.Normalizer.Form;
  *
  * @author alchemist
  */
+
 public class Infection extends JFrame{
 
     /**
@@ -26,23 +27,29 @@ public class Infection extends JFrame{
      */
     final int radiusCity=30;// отображаемый радиус города
     
-    final int SizeBigButton=100;
-    final int NUM_BIG_BUTTON = 5;
-    final int NEXT_TURN = 0;
-    final int HILL = NEXT_TURN+1;
-    final int BUILD = HILL+1;
-    final int VACTINE = BUILD+1;
-    final int TELEPORT = VACTINE+1;
-    Image BigButtons[]=new Image[NUM_BIG_BUTTON];
-    static Image Background;
+    //кнопки правой панели
+    final int SizeBigButton=100; // размер кнопок
+    final int NUM_BIG_BUTTON = 5; // их количество
+    //индексы
+    final int NEXT_TURN = 0; // передача хода 
+    final int HILL = NEXT_TURN+1; // лечение города
+    final int BUILD = HILL+1; // постройка лаборатории
+    final int VACTINE = BUILD+1; // изобретение вакцины
+    final int TELEPORT = VACTINE+1; // телепортация между лабораториями
+    Image BigButtons[]=new Image[NUM_BIG_BUTTON];// сами кнопки
+    
+    static Image Background;// карта мира
     static game logic; // класс игры
     //static Infection form;
     static int actCard; // номер активной карты
-    static int Left=0,Top=0,Width=500,Height=500;
+    static int Left=0,Top=0,Width=500,Height=500; // положение камеры
+    
     Infection(String s, int iNumGamers, int iLevel){
         super(s);
         logic = new game(iNumGamers, iLevel);// создание класса игры
         getContentPane().setBackground(Color.WHITE);
+        
+        //инициализация фоновой картинки и картинок на кнопках правой панели
         Toolkit tool= getToolkit();
         Background = tool.createImage(Canvas.class.getResource("/picture/mainback.jpg"));
         BigButtons[NEXT_TURN]=tool.createImage(Canvas.class.getResource("/picture/nextturn.jpg"));
@@ -50,6 +57,8 @@ public class Infection extends JFrame{
         BigButtons[TELEPORT]=tool.createImage(Canvas.class.getResource("/picture/teleport.jpg"));
         BigButtons[VACTINE]=tool.createImage(Canvas.class.getResource("/picture/vactine.jpg"));
         BigButtons[BUILD]=tool.createImage(Canvas.class.getResource("/picture/build.jpg"));
+        
+        //создание окна
         setSize(1200, 700);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setVisible(true);
@@ -59,6 +68,7 @@ public class Infection extends JFrame{
         actCard=-1;
     }
     
+    //перевод из координат игры в координаты на экране
     int getPaintX(int iLogicX){
         int W=getWidth();
         return (iLogicX-Left)*W/Width;
@@ -69,13 +79,17 @@ public class Infection extends JFrame{
         return (iLogicY-Top)*H/Height;
     }
     
+    // перерисовка сцены
     public void paint(Graphics g)
     {        
-        //Hill.setLocation(getWidth()-100, 0);
+        // очистка экрана
         int H=getHeight(),W=getWidth();
         g.clearRect(0, 0, W, H);
         
+        //прорисовка карты мира
         g.drawImage(Background,getPaintX(0),getPaintY(0),getPaintX(1000)-getPaintX(0),getPaintY(1000)-getPaintY(0),this);
+        
+        //получение массива путей
         g.setColor(Color.red);
         Vector<track> Trackers = logic.getTrackers();
         int num=Trackers.size();
@@ -148,24 +162,21 @@ public class Infection extends JFrame{
         //новое отображение карт на руках
         Vector<Integer> Arm = logic.getArm();
         int n=Arm.size();
-        for(int i=0;i<9;i++){
-            if(i<n){
-                String s=Cities.get(Arm.get(i)).getName();
-                //Cards.get(i).setLocation(0,800);
-                int color=Cities.get(Arm.get(i)).getColor();
-                setColor(g,color);
-                g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
-                g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
-                if(color<2){
-                    g.setColor(Color.WHITE);
-                }
-                else{
-                    g.setColor(Color.BLACK);
-                }
-                g.drawString(s, 70, (H-10)-(i+1)*35+20);
-                g.drawString("<-", 15, (H-10)-(i+1)*35+20);
-            }  
-            
+        for(int i=0;i<9 && i<n;i++){
+            String s=Cities.get(Arm.get(i)).getName();
+            //Cards.get(i).setLocation(0,800);
+            int color=Cities.get(Arm.get(i)).getColor();
+            setColor(g,color);
+            g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
+            g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
+            if(color<2){
+                g.setColor(Color.WHITE);
+            }
+            else{
+                g.setColor(Color.BLACK);
+            }
+            g.drawString(s, 70, (H-10)-(i+1)*35+20);
+            g.drawString("<-", 15, (H-10)-(i+1)*35+20);            
         }
         
         
@@ -177,11 +188,25 @@ public class Infection extends JFrame{
                 g.fillOval(i*radiusCity*3+W/3,H-radiusCity*3,radiusCity*2,radiusCity*2);
             }
         }
+        
+        // отображение уровня эпидемий
+        int Danger=logic.getDanger();
+        for(int i=0; i<Danger && i<8; i++){
+            g.setColor(Color.RED);
+            g.fillOval(i*radiusCity*3+W/4,H/4-radiusCity*3,radiusCity*2,radiusCity*2);
+        }
+        for(int i=Danger; i<8; i++){
+            g.setColor(Color.BLUE);
+            g.fillOval(i*radiusCity*3+W/4,H/4-radiusCity*3,radiusCity*2,radiusCity*2);
+        }
+        
+        // отображение правой панели кнопок
         for(int i=0;i<NUM_BIG_BUTTON;i++){
             g.drawImage(BigButtons[i],W-SizeBigButton,H-SizeBigButton*(i+1),SizeBigButton,SizeBigButton,this);
         }
     }
    
+    // установка цвета в зависимости от индекса вируса Num
     private void setColor(Graphics g, int Num){
        switch(Num){
        case 0:    
@@ -195,29 +220,27 @@ public class Infection extends JFrame{
        }
     } 
     
+    //обработка клика мыши
     class CustomListener implements MouseListener {
           int XPush=0,YPush=0;
-          //событи происходящее при клике мыши
+          //событие происходящее при клике мыши
           public void mouseClicked(MouseEvent e) {
-              //X=e.getX()*Width/100+getWidth()*Left/100-radiusCity/2;
               int X=e.getX()-radiusCity/2;
               int Y=e.getY()-radiusCity/2;
-              // обработка нажатия кнопок
               
-              //g.fillRoundRect(50,(H-10)-(i+1)*35, 130, 25,40,40);
-              //g.fillRoundRect(10,(H-10)-(i+1)*35, 30, 25,20,20);
-              
+              //обработка нажатия на кнопки
               int ActCard=(getHeight()-Y+5)/35-1;
               Vector<Integer> Arm=logic.getArm();
               //сброс
-              if(X>=0 && X<=30){
+              if(X>=0 && X<=30){ // сброс карты
                 Arm.remove(ActCard);
               }
-              else if(X>=40 && X<=170){
+              else if(X>=40 && X<=170){ // активация карты (перенос в город)
                 if(logic.Move(Arm.get(ActCard))){
                   Arm.remove(ActCard);
                 }
               }
+              // обработка кнопок правой панели
               else if(X>getWidth()-SizeBigButton-15 && Y>getHeight()-SizeBigButton*NUM_BIG_BUTTON-10){
                 int Num=(getHeight()-Y-15)/SizeBigButton;  
                 if(Num==NEXT_TURN){
@@ -237,12 +260,13 @@ public class Infection extends JFrame{
                   logic.Teleport();
                 } 
               }
+              //обработка клика на карте мира
               else{
                 logic.onClick(e.getX()*Width/getWidth()+Left-radiusCity/2,e.getY()*Height/getHeight()+Top-radiusCity/2,
                       radiusCity*Width/getWidth(),
                       radiusCity*Height/getHeight());
               }
-              repaint();
+              repaint();// перерисовка
           }
 
           public void mouseEntered(MouseEvent e) {
@@ -255,21 +279,29 @@ public class Infection extends JFrame{
           public void mouseExited(MouseEvent e) {
              
           }
-
+          
+          /* 
+           * реализация
+           * прокрутки
+           */
+          // при нажатии кнопки мыши
           public void mousePressed(MouseEvent e) {
-              
+              // сохранить координаты точки нажатия
               XPush=e.getX();
               YPush=e.getY();
           }
-
+          
+          // при отпускании кнопки мыши
           public void mouseReleased(MouseEvent e) {
+              //вычисляем горизонтальное смещение
               Left-=(e.getX()-XPush)/3;
               if(Left<0) Left=0;
               if(Left+Width>1000)Left=1000-Width;
+              // вертикальное смещение
               Top-=(e.getY()-YPush)/3;
               if(Top<0) Top=0;
               if(Top+Height>1000)Top=1000-Height;
-              repaint();
+              repaint();// перерисовка
           }
         
         
